@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 using Lab_5__Net_technologies_;
 
 class Program
@@ -11,31 +12,48 @@ class Program
 
         using (var db = new AppDbContext())
         {
-            // Закоментуй або видали EnsureDeleted, якщо хочеш, щоб дані зберігалися між запусками
-            // db.Database.EnsureDeleted(); 
+            // Створюємо базу, якщо її ще немає
             db.Database.EnsureCreated();
 
-            Console.WriteLine("=== ПЕРЕВІРКА ТА ДОДАВАННЯ КОРИСТУВАЧІВ ===");
+            Console.WriteLine("=== ОПЕРАЦІЯ ДОДАВАННЯ КОРИСТУВАЧІВ ===");
 
-            // Перевіряємо, чи таблиця Users порожня
-            if (!db.Users.Any())
+            // Список користувачів, яких ми хочемо бачити в базі
+            var usersToAdd = new List<User>
             {
-                var user1 = new User { FirstName = "Іван", LastName = "Петренко", Email = "ivan@gmail.com" };
-                var user2 = new User { FirstName = "Марія", LastName = "Іваненко", Email = "maria@gmail.com" };
-                var user3 = new User { FirstName = "Олексій", LastName = "Коваленко", Email = "oleksiy.dev@ukr.net" };
+                new User { FirstName = "Іван", LastName = "Петренко", Email = "ivan@gmail.com" },
+                new User { FirstName = "Марія", LastName = "Іваненко", Email = "maria@gmail.com" },
+                new User { FirstName = "Олексій", LastName = "Коваленко", Email = "oleksiy.dev@ukr.net" },
+                new User { FirstName = "Валерія", LastName = "Сорокіна", Email = "valeriia@univ.net" } // Твій новий користувач
+            };
 
-                db.Users.AddRange(user1, user2, user3); // Можна додавати групою
+            int addedCount = 0;
+
+            foreach (var newUser in usersToAdd)
+            {
+                // Перевіряємо, чи є вже в базі користувач з таким Email
+                bool exists = db.Users.Any(u => u.Email == newUser.Email);
+
+                if (!exists)
+                {
+                    db.Users.Add(newUser);
+                    Console.WriteLine($"Додано: {newUser.FirstName} ({newUser.Email})");
+                    addedCount++;
+                }
+            }
+
+            if (addedCount > 0)
+            {
                 db.SaveChanges();
-                Console.WriteLine("Нових користувачів додано до порожньої бази!\n");
+                Console.WriteLine($"\nУспішно додано нових користувачів: {addedCount}");
             }
             else
             {
-                Console.WriteLine("Користувачі вже існують у базі. Нові записи не додано.\n");
+                Console.WriteLine("\nВсі вказані користувачі вже існують у базі. Нічого не додано.");
             }
 
-            Console.WriteLine("=== СПИСОК КОРИСТУВАЧІВ У БАЗІ ===");
-            var users = db.Users.ToList();
-            foreach (var u in users)
+            Console.WriteLine("\n=== ПОТОЧНИЙ СПИСОК У БАЗІ ===");
+            var allUsers = db.Users.ToList();
+            foreach (var u in allUsers)
             {
                 Console.WriteLine($"{u.Id}. {u.FirstName} {u.LastName} - {u.Email}");
             }
